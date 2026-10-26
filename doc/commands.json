@@ -4509,9 +4509,10 @@
                 "--elite elite computations applied to key",
                 "--raw no computations applied to key",
                 "-v, --verbose verbose output",
-                "--shallow use shallow (ASK) reader modulation instead of OOK"
+                "--shallow use shallow (ASK) reader modulation instead of OOK",
+                "--nonce <hex|random> reader nonce as 4 hex bytes or 'random'"
             ],
-            "usage": "hf iclass creditepurse [-hv] [-k <hex>] [--ki <dec>] -d <hex> [--elite] [--raw] [--shallow]"
+            "usage": "hf iclass creditepurse [-hv] [-k <hex>] [--ki <dec>] -d <hex> [--elite] [--raw] [--shallow] [--nonce <hex|random>]"
         },
         "hf iclass decrypt": {
             "command": "hf iclass decrypt",
@@ -4560,9 +4561,10 @@
                 "--force force unsecure card read",
                 "--shallow use shallow (ASK) reader modulation instead of OOK",
                 "--ns no save to file",
-                "--page <dec> which page to dump from"
+                "--page <dec> which page to dump from",
+                "--nonce <hex|random> reader nonce as 4 hex bytes or 'random'"
             ],
-            "usage": "hf iclass dump [-hz] [-f <fn>] [-k <hex>] [--ki <dec>] [--credit <hex>] [--ci <dec>] [--elite] [--raw] [--nr] [--force] [--shallow] [--ns] [--page <dec>]"
+            "usage": "hf iclass dump [-hz] [-f <fn>] [-k <hex>] [--ki <dec>] [--credit <hex>] [--ci <dec>] [--elite] [--raw] [--nr] [--force] [--shallow] [--ns] [--page <dec>] [--nonce <hex|random>]"
         },
         "hf iclass eload": {
             "command": "hf iclass eload",
@@ -4862,9 +4864,10 @@
                 "--nr replay of NR/MAC",
                 "-v, --verbose verbose output",
                 "--shallow use shallow (ASK) reader modulation instead of OOK",
-                "-@ optional - continuous mode"
+                "-@ optional - continuous mode",
+                "--nonce <hex|random> reader nonce as 4 hex bytes or 'random'"
             ],
-            "usage": "hf iclass rdbl [-hv@] [-k <hex>] [--ki <dec>] --blk <dec> [--credit] [--elite] [--raw] [--nr] [--shallow]"
+            "usage": "hf iclass rdbl [-hv@] [-k <hex>] [--ki <dec>] --blk <dec> [--credit] [--elite] [--raw] [--nr] [--shallow] [--nonce <hex|random>]"
         },
         "hf iclass reader": {
             "command": "hf iclass reader",
@@ -4901,9 +4904,10 @@
                 "--raw no computations applied to key",
                 "-v, --verbose verbose output",
                 "--shallow use shallow (ASK) reader modulation instead of OOK",
-                "--nr replay of nr mac with privilege escalation"
+                "--nr replay of nr mac with privilege escalation",
+                "--nonce <hex|random> reader nonce as 4 hex bytes or 'random'"
             ],
-            "usage": "hf iclass restore [-hv] -f <fn> [-k <hex>] [--ki <dec>] --first <dec> --last <dec> [--credit] [--elite] [--raw] [--shallow] [--nr]"
+            "usage": "hf iclass restore [-hv] -f <fn> [-k <hex>] [--ki <dec>] --first <dec> --last <dec> [--credit] [--elite] [--raw] [--shallow] [--nr] [--nonce <hex|random>]"
         },
         "hf iclass sam": {
             "command": "hf iclass sam",
@@ -5025,9 +5029,10 @@
                 "-e <dec> tearoff delay end (in us) must be a higher value than the start delay",
                 "--loop <dec> number of times to loop per tearoff time",
                 "--sleep <ms> Sleep between each tear",
-                "--arm Runs the commands on device side and tries to stabilize tears"
+                "--arm Runs the commands on device side and tries to stabilize tears",
+                "--nonce <hex|random> reader nonce as 4 hex bytes or 'random'"
             ],
-            "usage": "hf iclass tear [-hv] [-k <hex>] [--ki <dec>] --blk <dec> [-d <hex>] [-m <hex>] [--credit] [--elite] [--raw] [--nr] [--shallow] -s <dec> [-i <dec>] [-e <dec>] [--loop <dec>] [--sleep <ms>] [--arm]"
+            "usage": "hf iclass tear [-hv] [-k <hex>] [--ki <dec>] --blk <dec> [-d <hex>] [-m <hex>] [--credit] [--elite] [--raw] [--nr] [--shallow] -s <dec> [-i <dec>] [-e <dec>] [--loop <dec>] [--sleep <ms>] [--arm] [--nonce <hex|random>]"
         },
         "hf iclass unhash": {
             "command": "hf iclass unhash",
@@ -5085,9 +5090,10 @@
                 "--nr replay of NR/MAC block write or use privilege escalation if mac is empty",
                 "-v, --verbose verbose output",
                 "--shallow use shallow (ASK) reader modulation instead of OOK",
-                "-@ optional - continuous mode"
+                "-@ optional - continuous mode",
+                "--nonce <hex|random> reader nonce as 4 hex bytes or 'random'"
             ],
-            "usage": "hf iclass wrbl [-hv@] [-k <hex>] [--ki <dec>] --blk <dec> -d <hex> [-m <hex>] [--credit] [--elite] [--raw] [--nr] [--shallow]"
+            "usage": "hf iclass wrbl [-hv@] [-k <hex>] [--ki <dec>] --blk <dec> -d <hex> [-m <hex>] [--credit] [--elite] [--raw] [--nr] [--shallow] [--nonce <hex|random>]"
         },
         "hf ict help": {
             "command": "hf ict help",
@@ -5729,13 +5735,9 @@
                 "--2k MIFARE Classic/Plus 2k",
                 "--4k MIFARE Classic 4k / S70",
                 "--in None (use CPU regular instruction set)",
-                "--im MMX",
-                "--is SSE2",
-                "--ia AVX",
-                "--i2 AVX2",
-                "--i5 AVX512"
+                "--ie NEON"
             ],
-            "usage": "hf mf autopwn [-hablv] [-k <hex>]... [-s <dec>] [-f <fn>] [--suffix <txt>] [--slow] [--mem] [--ns] [--mini] [--1k] [--2k] [--4k] [--in] [--im] [--is] [--ia] [--i2] [--i5]"
+            "usage": "hf mf autopwn [-hablv] [-k <hex>]... [-s <dec>] [-f <fn>] [--suffix <txt>] [--slow] [--mem] [--ns] [--mini] [--1k] [--2k] [--4k] [--in] [--ie]"
         },
         "hf mf brute": {
             "command": "hf mf brute",
@@ -6598,13 +6600,9 @@
                 "-t, --tests Run tests",
                 "-w, --wr Acquire nonces and UID, and write them to file `hf-mf-<UID>-nonces.bin`",
                 "--in None (use CPU regular instruction set)",
-                "--im MMX",
-                "--is SSE2",
-                "--ia AVX",
-                "--i2 AVX2",
-                "--i5 AVX512"
+                "--ie NEON"
             ],
-            "usage": "hf mf hardnested [-habrstw] [-k <hex>] [--blk <dec>] [--tblk <dec>] [--ta] [--tb] [--tk <hex>] [-u <hex>] [-f <fn>] [--in] [--im] [--is] [--ia] [--i2] [--i5]"
+            "usage": "hf mf hardnested [-habrstw] [-k <hex>] [--blk <dec>] [--tblk <dec>] [--ta] [--tb] [--tk <hex>] [-u <hex>] [-f <fn>] [--in] [--ie]"
         },
         "hf mf help": {
             "command": "hf mf help",
@@ -11261,8 +11259,8 @@
             "command": "hw connect",
             "description": "Connects to a Proxmark3 device via specified serial port. Baudrate here is only for physical UART or UART-BT, NOT for USB-CDC or blue shark add-on",
             "notes": [
-                "hw connect -p /dev/ttyACM0",
-                "hw connect -p /dev/ttyACM0 -b 115200"
+                "hw connect -p /dev/tty.usbmodemiceman1",
+                "hw connect -p /dev/tty.usbmodemiceman1 -b 115200"
             ],
             "offline": true,
             "options": [
@@ -16814,6 +16812,6 @@
     "metadata": {
         "commands_extracted": 936,
         "extracted_by": "PM3Help2JSON v1.00",
-        "extracted_on": "2026-10-14T15:56:50+00:00"
+        "extracted_on": "2026-10-26T06:40:43+00:00"
     }
 }

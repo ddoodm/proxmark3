@@ -1703,6 +1703,7 @@ bool authenticate_iclass_tag(iclass_auth_req_t *payload, picopass_hdr_t *hdr, ui
         pmac = mac_out;
 
     memcpy(ccnr, hdr->epurse, sizeof(hdr->epurse));
+    memcpy(ccnr + 8, payload->nr, sizeof(payload->nr));
 
     if (payload->use_replay) {
 
@@ -1724,7 +1725,11 @@ bool authenticate_iclass_tag(iclass_auth_req_t *payload, picopass_hdr_t *hdr, ui
 
         opt_doReaderMAC(ccnr, div_key, pmac);
 
-        // copy MAC to check command (readersignature)
+        // copy NR and MAC to check command (readersignature)
+        cmd_check[1] = payload->nr[0];
+        cmd_check[2] = payload->nr[1];
+        cmd_check[3] = payload->nr[2];
+        cmd_check[4] = payload->nr[3];
         cmd_check[5] = pmac[0];
         cmd_check[6] = pmac[1];
         cmd_check[7] = pmac[2];
@@ -1870,7 +1875,7 @@ void iClass_ReadBlock(uint8_t *msg) {
     // authenticate
     if (payload->do_auth) {
 
-        res = authenticate_iclass_tag(payload, &hdr, &start_time, &eof_time, NULL);
+        res = authenticate_iclass_tag(payload, &hdr, &start_time, &eof_time, response.mac);
         if (res == false) {
             if (payload->send_reply) {
                 response.isOK = res;

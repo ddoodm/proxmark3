@@ -59,6 +59,7 @@
 // used with read block, dump, write block
 typedef struct {
     uint8_t key[8];
+    uint8_t nr[4];
     bool use_raw;
     bool use_elite;
     bool use_credit_key;
