@@ -1875,7 +1875,7 @@ void iClass_ReadBlock(uint8_t *msg) {
     // authenticate
     if (payload->do_auth) {
 
-        res = authenticate_iclass_tag(payload, &hdr, &start_time, &eof_time, response.mac);
+        res = authenticate_iclass_tag(payload, &hdr, &start_time, &eof_time, NULL);
         if (res == false) {
             if (payload->send_reply) {
                 response.isOK = res;

@@ -3797,12 +3797,6 @@ static int iclass_read_block_ex(uint8_t *KEY, uint8_t blockno, uint8_t keyType, 
             PrintAndLogEx(NORMAL, "");
         }
         PrintAndLogEx(SUCCESS, " block %3d/0x%02X : " _GREEN_("%s"), blockno, blockno, sprint_hex(packet->data, sizeof(packet->data)));
-
-        // NR || MAC_reader, ready for legrec/legbrute --macs
-        if (auth && !replay) {
-            PrintAndLogEx(SUCCESS, " NR/MAC pair : %s%s", sprint_hex_inrow(payload.nr, 4), sprint_hex_inrow(packet->mac, 4));
-        }
-
         if (loop == false) {
             PrintAndLogEx(NORMAL, "");
         }

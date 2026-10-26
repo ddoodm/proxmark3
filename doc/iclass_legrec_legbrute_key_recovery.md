@@ -133,27 +133,6 @@ The 64-bit key space is split: legrec reduces it from 2^64 to 2^40, and legbrute
 
 > **Warning:** This process writes to the card's key block. If interrupted at the wrong moment the card may become permanently unusable. Do not remove the card from the antenna mid-run.
 
-### Minting NR/MAC pairs with a known key
-
-For testing the pipeline without a legitimate reader (or for `legbrute`, which needs two
-distinct pairs with the same CSN and ePurse), the PM3 reader can generate pairs itself:
-
-```
-hf iclass rdbl --blk 5 --ki 0 --nonce random -v
-hf iclass rdbl --blk 5 --ki 0 --nonce 1306cad9 -v
-```
-
-`--nonce` takes 4 hex bytes or the keyword `random`. Without it the reader sends NR `00000000`.
-The verbose output prints the pair as `NR || MAC_reader`, ready for `--macs`:
-
-```
-NR/MAC pair : 1306cad9b6c24466
-```
-
-The MAC is computed on the device from the card's live ePurse, so a pair is only valid until
-the ePurse changes. `rdbl @` (continuous mode) rolls a fresh `random` nonce per iteration.
-`--nonce` is also accepted on `hf iclass dump`, `wrbl`, `creditepurse`, `restore` and `tear`.
-
 ### How It Works (Step by Step)
 
 **Step 0 -- Select and authenticate**
