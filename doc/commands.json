@@ -4455,6 +4455,27 @@
             ],
             "usage": "hf iclass calcnewkey [-h] [--old <hex>] [--oki <dec>] [--new <hex>] [--nki <dec>] [--csn <hex>] [--elite] [--elite2] [--oldelite]"
         },
+        "hf iclass calcreplay": {
+            "command": "hf iclass calcreplay",
+            "description": "Calculate an offline NR/MAC replay value from a known key, CSN, card challenge and reader nonce. The e-purse must match the card's current value or the replay will fail.",
+            "notes": [
+                "hf iclass calcreplay -k 0011223344556677 --csn deadbeafdeadbeaf --epurse f0ffffffffffffff",
+                "hf iclass calcreplay -k 0011223344556677 --csn deadbeafdeadbeaf --epurse f0ffffffffffffff --nonce 01020304",
+                "hf iclass calcreplay --ki 0 --csn deadbeafdeadbeaf --epurse f0ffffffffffffff --nonce random --elite"
+            ],
+            "offline": true,
+            "options": [
+                "-h, --help This help",
+                "-k, --key <hex> Access key as 8 hex bytes",
+                "--ki <dec> Key index to select key from memory 'hf iclass managekeys'",
+                "--csn <hex> Card Serial Number as 8 hex bytes (not needed with --raw)",
+                "--epurse <hex> Card challenge (e-purse) as 8 hex bytes",
+                "--nonce <hex|random> Reader nonce as 4 hex bytes or 'random' (def: 00000000)",
+                "--elite Elite computations applied to key",
+                "--raw key is the raw diversified key, no diversification"
+            ],
+            "usage": "hf iclass calcreplay [-h] [-k <hex>] [--ki <dec>] [--csn <hex>] --epurse <hex> [--nonce <hex|random>] [--elite] [--raw]"
+        },
         "hf iclass chk": {
             "command": "hf iclass chk",
             "description": "Checkkeys loads a dictionary text file with 8 byte hex keys to test authenticating against a iCLASS tag",
@@ -4677,7 +4698,7 @@
         },
         "hf iclass help": {
             "command": "hf iclass help",
-            "description": "help This help list List iclass history view Display content from tag dump file ----------- --------------------- Recovery -------------------- loclass Use loclass to perform bruteforce reader attack lookup Uses authentication trace to check for key in dictionary file legbrute Bruteforces 40 bits of a partial diversified key, provided 24 bits of the key and two valid nr-macs unhash Reverses a diversified key to retrieve hash0 pre-images after DES encryption ----------- ---------------------- Utils ---------------------- calcnewkey Calc diversified keys (blocks 3 & 4) to write new keys encode Encode binary wiegand to block 7 encrypt Encrypt given block data decrypt Decrypt given block data or tag dump file managekeys Manage keys to use with iclass commands permutekey Permute function from 'heart of darkness' paper --------------------------------------------------------------------------------------- hf iclass list available offline: yes Alias of `trace list -t iclass -c` with selected protocol data to annotate trace buffer You can load a trace from file (see `trace load -h`) or it be downloaded from device by default It accepts all other arguments of `trace list`. Note that some might not be relevant for this specific protocol",
+            "description": "help This help list List iclass history view Display content from tag dump file ----------- --------------------- Recovery -------------------- loclass Use loclass to perform bruteforce reader attack lookup Uses authentication trace to check for key in dictionary file legbrute Bruteforces 40 bits of a partial diversified key, provided 24 bits of the key and two valid nr-macs unhash Reverses a diversified key to retrieve hash0 pre-images after DES encryption ----------- ---------------------- Utils ---------------------- calcnewkey Calc diversified keys (blocks 3 & 4) to write new keys calcreplay Calc an offline NR/MAC replay value for rdbl / dump encode Encode binary wiegand to block 7 encrypt Encrypt given block data decrypt Decrypt given block data or tag dump file managekeys Manage keys to use with iclass commands permutekey Permute function from 'heart of darkness' paper --------------------------------------------------------------------------------------- hf iclass list available offline: yes Alias of `trace list -t iclass -c` with selected protocol data to annotate trace buffer You can load a trace from file (see `trace load -h`) or it be downloaded from device by default It accepts all other arguments of `trace list`. Note that some might not be relevant for this specific protocol",
             "notes": [
                 "hf iclass list --frame -> show frame delay times",
                 "hf iclass list -1 -> use trace buffer"
@@ -5729,13 +5750,9 @@
                 "--2k MIFARE Classic/Plus 2k",
                 "--4k MIFARE Classic 4k / S70",
                 "--in None (use CPU regular instruction set)",
-                "--im MMX",
-                "--is SSE2",
-                "--ia AVX",
-                "--i2 AVX2",
-                "--i5 AVX512"
+                "--ie NEON"
             ],
-            "usage": "hf mf autopwn [-hablv] [-k <hex>]... [-s <dec>] [-f <fn>] [--suffix <txt>] [--slow] [--mem] [--ns] [--mini] [--1k] [--2k] [--4k] [--in] [--im] [--is] [--ia] [--i2] [--i5]"
+            "usage": "hf mf autopwn [-hablv] [-k <hex>]... [-s <dec>] [-f <fn>] [--suffix <txt>] [--slow] [--mem] [--ns] [--mini] [--1k] [--2k] [--4k] [--in] [--ie]"
         },
         "hf mf brute": {
             "command": "hf mf brute",
@@ -6598,13 +6615,9 @@
                 "-t, --tests Run tests",
                 "-w, --wr Acquire nonces and UID, and write them to file `hf-mf-<UID>-nonces.bin`",
                 "--in None (use CPU regular instruction set)",
-                "--im MMX",
-                "--is SSE2",
-                "--ia AVX",
-                "--i2 AVX2",
-                "--i5 AVX512"
+                "--ie NEON"
             ],
-            "usage": "hf mf hardnested [-habrstw] [-k <hex>] [--blk <dec>] [--tblk <dec>] [--ta] [--tb] [--tk <hex>] [-u <hex>] [-f <fn>] [--in] [--im] [--is] [--ia] [--i2] [--i5]"
+            "usage": "hf mf hardnested [-habrstw] [-k <hex>] [--blk <dec>] [--tblk <dec>] [--ta] [--tb] [--tk <hex>] [-u <hex>] [-f <fn>] [--in] [--ie]"
         },
         "hf mf help": {
             "command": "hf mf help",
@@ -11261,8 +11274,8 @@
             "command": "hw connect",
             "description": "Connects to a Proxmark3 device via specified serial port. Baudrate here is only for physical UART or UART-BT, NOT for USB-CDC or blue shark add-on",
             "notes": [
-                "hw connect -p /dev/ttyACM0",
-                "hw connect -p /dev/ttyACM0 -b 115200"
+                "hw connect -p /dev/tty.usbmodemiceman1",
+                "hw connect -p /dev/tty.usbmodemiceman1 -b 115200"
             ],
             "offline": true,
             "options": [
@@ -16812,8 +16825,8 @@
         }
     },
     "metadata": {
-        "commands_extracted": 936,
+        "commands_extracted": 937,
         "extracted_by": "PM3Help2JSON v1.00",
-        "extracted_on": "2026-10-14T15:56:50+00:00"
+        "extracted_on": "2026-10-26T09:49:39+00:00"
     }
 }

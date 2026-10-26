@@ -533,6 +533,7 @@ Check column "offline" for their availability.
 |`hf iclass eview        `|N       |`View emulator memory`
 |`hf iclass configcard   `|N       |`Reader configuration card generator`
 |`hf iclass calcnewkey   `|Y       |`Calc diversified keys (blocks 3 & 4) to write new keys`
+|`hf iclass calcreplay   `|Y       |`Calc an offline NR/MAC replay value for rdbl / dump`
 |`hf iclass encode       `|Y       |`Encode binary wiegand to block 7`
 |`hf iclass encrypt      `|Y       |`Encrypt given block data`
 |`hf iclass decrypt      `|Y       |`Decrypt given block data or tag dump file`

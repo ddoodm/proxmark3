@@ -5777,6 +5777,140 @@ static int CmdHFiClassCalcNewKey(const char *Cmd) {
     return PM3_SUCCESS;
 }
 
+// offline NR/MAC calculator, output feeds the replay path of rdbl / dump
+static int CmdHFiClassCalcReplay(const char *Cmd) {
+    CLIParserContext *ctx;
+    CLIParserInit(&ctx, "hf iclass calcreplay",
+                  "Calculate an offline NR/MAC replay value from a known key, CSN, card challenge and reader nonce.\n"
+                  "The e-purse must match the card's current value or the replay will fail.",
+                  "hf iclass calcreplay -k 0011223344556677 --csn deadbeafdeadbeaf --epurse f0ffffffffffffff\n"
+                  "hf iclass calcreplay -k 0011223344556677 --csn deadbeafdeadbeaf --epurse f0ffffffffffffff --nonce 01020304\n"
+                  "hf iclass calcreplay --ki 0 --csn deadbeafdeadbeaf --epurse f0ffffffffffffff --nonce random --elite");
+
+    void *argtable[] = {
+        arg_param_begin,
+        arg_str0("k", "key", "<hex>", "Access key as 8 hex bytes"),
+        arg_int0(NULL, "ki", "<dec>", "Key index to select key from memory 'hf iclass managekeys'"),
+        arg_str0(NULL, "csn", "<hex>", "Card Serial Number as 8 hex bytes (not needed with --raw)"),
+        arg_str1(NULL, "epurse", "<hex>", "Card challenge (e-purse) as 8 hex bytes"),
+        arg_str0(NULL, "nonce", "<hex|random>", "Reader nonce as 4 hex bytes or 'random' (def: 00000000)"),
+        arg_lit0(NULL, "elite", "Elite computations applied to key"),
+        arg_lit0(NULL, "raw", "key is the raw diversified key, no diversification"),
+        arg_param_end
+    };
+    CLIExecWithReturn(ctx, Cmd, argtable, false);
+
+    int key_len = 0;
+    uint8_t key[PICOPASS_BLOCK_SIZE] = {0};
+    CLIGetHexWithReturn(ctx, 1, key, &key_len);
+
+    int key_nr = arg_get_int_def(ctx, 2, -1);
+
+    if (key_len > 0 && key_nr >= 0) {
+        PrintAndLogEx(ERR, "Please specify key or index, not both");
+        CLIParserFree(ctx);
+        return PM3_EINVARG;
+    }
+
+    if (key_len > 0) {
+        if (key_len != PICOPASS_BLOCK_SIZE) {
+            PrintAndLogEx(ERR, "Key is incorrect length");
+            CLIParserFree(ctx);
+            return PM3_EINVARG;
+        }
+    } else if (key_nr >= 0) {
+        if (key_nr < ICLASS_KEYS_MAX) {
+            memcpy(key, iClass_Key_Table[key_nr], PICOPASS_BLOCK_SIZE);
+            PrintAndLogEx(SUCCESS, "Using key[%d] " _GREEN_("%s"), key_nr, sprint_hex(iClass_Key_Table[key_nr], PICOPASS_BLOCK_SIZE));
+        } else {
+            PrintAndLogEx(ERR, "Key number is invalid");
+            CLIParserFree(ctx);
+            return PM3_EINVARG;
+        }
+    } else {
+        PrintAndLogEx(ERR, "Key or key number must be provided");
+        CLIParserFree(ctx);
+        return PM3_EINVARG;
+    }
+
+    int csn_len = 0;
+    uint8_t csn[PICOPASS_BLOCK_SIZE] = {0};
+    CLIGetHexWithReturn(ctx, 3, csn, &csn_len);
+    if (csn_len != 0 && csn_len != PICOPASS_BLOCK_SIZE) {
+        PrintAndLogEx(ERR, "CSN is incorrect length");
+        CLIParserFree(ctx);
+        return PM3_EINVARG;
+    }
+
+    int epurse_len = 0;
+    uint8_t epurse[PICOPASS_BLOCK_SIZE] = {0};
+    CLIGetHexWithReturn(ctx, 4, epurse, &epurse_len);
+    if (epurse_len != PICOPASS_BLOCK_SIZE) {
+        PrintAndLogEx(ERR, "E-purse must be 8 hex bytes");
+        CLIParserFree(ctx);
+        return PM3_EINVARG;
+    }
+
+    uint8_t nonce[4] = {0};
+    const char *nonce_str = arg_get_str(ctx, 5)->sval[0];
+    if (strcmp(nonce_str, "random") == 0) {
+        if (pcrypto_rng_fill_oneshot(nonce, sizeof(nonce), "hf_iclass_calcreplay") != PM3_SUCCESS) {
+            CLIParserFree(ctx);
+            return PM3_ESOFT;
+        }
+    } else {
+        int nonce_len = 0;
+        CLIGetHexWithReturn(ctx, 5, nonce, &nonce_len);
+        if (nonce_len != 0 && nonce_len != 4) {
+            PrintAndLogEx(ERR, "Nonce must be 4 hex bytes");
+            CLIParserFree(ctx);
+            return PM3_EINVARG;
+        }
+    }
+
+    bool elite = arg_get_lit(ctx, 6);
+    bool rawkey = arg_get_lit(ctx, 7);
+
+    CLIParserFree(ctx);
+
+    if (elite + rawkey > 1) {
+        PrintAndLogEx(ERR, "Can not use a combo of 'elite', 'raw'");
+        return PM3_EINVARG;
+    }
+
+    if (rawkey == false && csn_len != PICOPASS_BLOCK_SIZE) {
+        PrintAndLogEx(ERR, "CSN is required unless --raw");
+        return PM3_EINVARG;
+    }
+
+    uint8_t div_key[PICOPASS_BLOCK_SIZE] = {0};
+    if (rawkey) {
+        memcpy(div_key, key, sizeof(div_key));
+    } else {
+        HFiClassCalcDivKey(csn, key, div_key, elite);
+    }
+
+    // MAC input is the card challenge followed by the reader nonce
+    uint8_t ccnr[12] = {0};
+    memcpy(ccnr, epurse, sizeof(epurse));
+    memcpy(ccnr + 8, nonce, sizeof(nonce));
+
+    uint8_t mac[4] = {0};
+    doMAC(ccnr, div_key, mac);
+
+    // replay payload: NR in the first half, reader MAC in the second
+    uint8_t nr_mac[8] = {0};
+    memcpy(nr_mac, nonce, sizeof(nonce));
+    memcpy(nr_mac + 4, mac, sizeof(mac));
+
+    PrintAndLogEx(NORMAL, "");
+    PrintAndLogEx(SUCCESS, "Div key....... %s", sprint_hex_inrow(div_key, PICOPASS_BLOCK_SIZE));
+    PrintAndLogEx(SUCCESS, "NR/MAC........ " _YELLOW_("%s"), sprint_hex_inrow(nr_mac, sizeof(nr_mac)));
+    PrintAndLogEx(HINT, "Hint: use this value as the key with " _YELLOW_("`--nr`") " on `hf iclass rdbl` and `hf iclass dump`");
+    PrintAndLogEx(NORMAL, "");
+    return PM3_SUCCESS;
+}
+
 static int iclass_load_keys(char *filename) {
 
     uint8_t *dump = NULL;
@@ -8540,6 +8674,7 @@ static command_t CommandTable[] = {
     {"-----------", CmdHelp,                    AlwaysAvailable, "---------------------- " _CYAN_("Utils") " ----------------------"},
     {"configcard",  CmdHFiClassConfigCard,      IfPm3Iclass,     "Reader configuration card generator"},
     {"calcnewkey",  CmdHFiClassCalcNewKey,      AlwaysAvailable, "Calc diversified keys (blocks 3 & 4) to write new keys"},
+    {"calcreplay",  CmdHFiClassCalcReplay,      AlwaysAvailable, "Calc an offline NR/MAC replay value for rdbl / dump"},
     {"encode",      CmdHFiClassEncode,          AlwaysAvailable, "Encode binary wiegand to block 7"},
     {"encrypt",     CmdHFiClassEncryptBlk,      AlwaysAvailable, "Encrypt given block data"},
     {"decrypt",     CmdHFiClassDecrypt,         AlwaysAvailable, "Decrypt given block data or tag dump file" },
